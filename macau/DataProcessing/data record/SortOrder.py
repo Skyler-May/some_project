@@ -12,13 +12,14 @@ def process_file(input_path, output_path):
     current_draw_data = []
 
     # 遍历每一行数据
-    for line in lines:
+    for i, line in enumerate(lines):
         if line.startswith("第 "):  # 检查是否是期号的行
-            # 当遇到新的一期时，将前一期的数据整理并添加到formatted_data中
+            # 在遇到新的一期之前，如果前一期有数据，保存它
             if current_period and current_draw_data:
                 formatted_data += f"第 {current_period} 期: {', '.join(current_draw_data)}\n"
-                current_draw_data = []  # 重置当前号码和动物列表
-
+            
+            # 重置当前期的数据
+            current_draw_data = []
             # 提取期号和开奖时间
             tokens = line.split()
             current_period = tokens[1]
@@ -26,8 +27,14 @@ def process_file(input_path, output_path):
         elif line.isdigit():
             # 将数字和对应的动物添加到当前号码和动物列表中
             number = line
-            animal = lines[lines.index(line) + 1].strip()
-            current_draw_data.append(f"{number} ({animal})")
+            # 确保下一行存在且不是期号行
+            if i + 1 < len(lines) and not lines[i + 1].startswith("第 "):
+                animal = lines[i + 1].strip()
+                current_draw_data.append(f"{number} ({animal})")
+
+    # 处理最后一个期的数据
+    if current_period and current_draw_data:
+        formatted_data += f"第 {current_period} 期: {', '.join(current_draw_data)}\n"
 
     # 将整理后的数据反转顺序
     formatted_data = formatted_data.strip().split('\n')
